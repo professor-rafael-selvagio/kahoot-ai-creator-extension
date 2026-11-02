@@ -1,6 +1,14 @@
 # ⚡ Kahoot! AI Creator - Extensão para Google Chrome
 
-Extensão moderna para o **Google Chrome (Manifest V3)** projetada para acelerar a criação de quizzes e jogos no **Kahoot!** (`create.kahoot.it`). Com ela, você digita o **tema** e o **número de perguntas desejadas**, e a extensão gera e preenche automaticamente todos os slides com títulos, alternativas e marcação da resposta correta diretamente no criador do Kahoot!
+Extensão moderna para o **Google Chrome (Manifest V3)** projetada para acelerar a criação de quizzes e jogos no **Kahoot!** (`create.kahoot.it`). Com ela, você digita o **tema** e a **quantidade de perguntas desejadas**, e a IA gera e insere automaticamente todos os slides com títulos, alternativas e respostas corretas marcadas diretamente no criador de jogos.
+
+---
+
+## 📺 Demonstração em Vídeo
+
+Aprenda a utilizar a ferramenta na prática assistindo ao tutorial:
+
+👉 **[Assista ao Tutorial no YouTube](https://www.youtube.com/watch?v=rtGd7JdfL_s)**
 
 ---
 
@@ -9,27 +17,27 @@ Extensão moderna para o **Google Chrome (Manifest V3)** projetada para acelerar
 - 📏 **Limites Estritos do Kahoot!**:
   - **Enunciado da pergunta**: Máximo de **120 caracteres** (garantindo legibilidade em qualquer dispositivo).
   - **Respostas/Alternativas**: Máximo de **75 caracteres** por alternativa.
-- ⚖️ **Distribuição de Dificuldade 1/3 Balanceada**:
+- ⚖️ **Distribuição de Dificuldade Balanceada (1/3)**:
   - Exatamente **1/3 de perguntas Fáceis**, **1/3 Médias** e **1/3 Difíceis**.
-  - A ordem das perguntas é **embaralhada aleatoriamente** para dinâmicas de jogo mais instigantes.
-- 🔀 **Mescla de Tipos de Pergunta**:
-  - **Múltipla Escolha (Quiz)**: 4 alternativas exclusivas (Vermelho ▲, Azul ◆, Amarelo ● e Verde ■).
+  - A ordem de apresentação é **embaralhada aleatoriamente** para enriquecer a dinâmica do jogo.
+- 🔀 **Mescla Inteligente de Tipos de Pergunta**:
+  - **Múltipla Escolha (Quiz)**: 4 alternativas com os elementos visuais clássicos (Vermelho ▲, Azul ◆, Amarelo ● e Verde ■).
   - **Verdadeiro ou Falso**: 2 opções dinâmicas (*Verdadeiro* e *Falso*).
 - 🤖 **Geração com IA ou Motor Offline**:
-  - Integração com a API do **Google Gemini** (Gemini 1.5 Flash / 2.0).
-  - **Motor Inteligente Offline Integrado**: funciona na hora sem precisar de chave de API.
-- ⚡ **Automação Direta no Kahoot!**:
+  - Suporte à API do **Google Gemini** (Gemini 1.5 Flash / 2.0).
+  - **Motor Inteligente Offline Integrado**: funciona imediatamente sem a obrigatoriedade de chave de API.
+- ⚡ **Automação Direta no Navegador**:
   - Cria os slides de tipo **Quiz** e **Verdadeiro/Falso** sequencialmente.
-  - Preenche os campos `contenteditable` simulando digitação natural e disparando eventos reativos.
-  - Marca a resposta correta automaticamente com precisão.
+  - Preenche os campos de texto simulando eventos de digitação reativos compatíveis com o Kahoot!.
+  - Seleciona automaticamente a alternativa correta de cada questão.
 - 🎛️ **Dupla Interface de Uso**:
-  - **Assistente Flutuante na Página**: botão fixo `⚡ Criador de Jogos IA` na tela do Kahoot!.
-  - **Popup da Barra de Ferramentas**: com pré-visualização categorizada de perguntas, badges de dificuldade e contadores de caracteres.
-- 📥 **Exportação para Planilha (.csv)**: gera arquivo no formato oficial de importação em lote do Kahoot! (*Import from spreadsheet*).
+  - **Assistente Flutuante na Página**: botão fixo `⚡ Criador de Jogos IA` diretamente na interface do Kahoot!.
+  - **Popup da Barra de Ferramentas**: painel com pré-visualização, contadores de caracteres e tags de dificuldade.
+- 📥 **Exportação para Planilha (.csv)**: gere arquivos prontos no padrão de importação em lote do Kahoot! (*Import from spreadsheet*).
 
 ---
 
-## 📂 Estrutura dos Arquivos
+## 📂 Estrutura do Projeto
 
 ```text
 kahoot-ai-creator-extension/
@@ -47,28 +55,45 @@ kahoot-ai-creator-extension/
 
 ---
 
-## 🛠️ Como Instalar ou Atualizar no Google Chrome
+## 🛠️ Como Instalar no Google Chrome
 
-1. Abra o **Google Chrome** e acesse:
+### 1. Clonar o Repositório
+Abra o terminal do seu computador e clone o repositório para o diretório de sua preferência:
+
+```bash
+git clone https://github.com/professor-rafael-selvagio/kahoot-ai-creator-extension.git
+```
+
+> **Alternativa (sem Git):** Clique no botão verde **Code** no topo da página do GitHub, selecione **Download ZIP** e extraia a pasta no seu computador.
+
+---
+
+### 2. Carregar a Extensão no Chrome
+1. Abra o **Google Chrome** e acerte na barra de navegação:
    ```text
    chrome://extensions/
    ```
-2. No canto superior direito, ative a chave **"Modo do desenvolvedor"** (*Developer mode*).
-3. Se for instalar pela primeira vez ou atualizar o caminho:
-   - Clique em **"Carregar sem compactação"** (*Load unpacked*) e selecione a pasta:
-     ```text
-     /Users/rafael.selvagio/Projetos/MyApps/SoftwaresIA/Extensão Google Chrome/kahoot-ai-creator-extension
-     ```
-4. Se a extensão já estiver carregada com a nova pasta:
-   - Basta clicar no ícone de **atualizar** (seta circular 🔄) no card da extensão para aplicar as novas regras imediatamente!
+2. No canto superior direito da página, ative o botão **"Modo do desenvolvedor"** (*Developer mode*).
+3. Clique no botão **"Carregar sem compactação"** (*Load unpacked*) no canto superior esquerdo.
+4. Selecione a pasta clonada: `kahoot-ai-creator-extension`.
+
+Pronto! O ícone da extensão aparecerá na barra de ferramentas do seu navegador.
+
+---
+
+### 🔄 Como Atualizar
+Sempre que fizer alterações no código ou executar `git pull`:
+1. Acesse `chrome://extensions/`.
+2. Localize o card do **Kahoot! AI Creator**.
+3. Clique no ícone de **atualizar** (🔄 seta circular) para recarregar as modificações imediatamente.
 
 ---
 
 ## 🎮 Como Usar
 
-1. Acesse o criador do Kahoot!:
+1. Acesse o editor de jogos do Kahoot!:  
    👉 **[create.kahoot.it/creator](https://create.kahoot.it/creator)**
 2. Clique no botão flutuante **`⚡ Criador de Jogos IA`** no canto inferior direito da tela (ou no ícone da extensão no Chrome).
-3. Digite o **Tema do Jogo** (ex: *Inteligência Artificial*, *Marketing Digital*, *Python*, etc.) e a quantidade de perguntas (ex: 6, 9 ou 12).
+3. Informe o **Tema do Jogo** (ex.: *Inteligência Artificial*, *História do Brasil*, *Python Básico*) e selecione a **quantidade de perguntas**.
 4. Clique em **"🚀 Gerar e Inserir no Kahoot Automaticamente"**.
-5. As perguntas serão geradas com exatamente 1/3 fáceis, 1/3 médias e 1/3 difíceis (em ordem aleatória), alternando entre múltipla escolha e verdadeiro/falso, respeitando rigorosamente os limites de 120 caracteres para perguntas e 75 para respostas!
+5. As perguntas serão geradas respeitando a regra de **1/3 fáceis, 1/3 médias e 1/3 difíceis**, com tipos variados (múltipla escolha e verdadeiro/falso) e preenchidas slide por slide no seu jogo!
