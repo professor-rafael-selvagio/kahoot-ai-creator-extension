@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kahoot! AI Creator</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+  <div class="popup-container">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-box">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h1>Kahoot! AI Creator</h1>
+          <p>Gerador Automático de Jogos & Perguntas</p>
+          <p>by Prof. Esp. Rafael de Sena Selvagio</p>
+        </div>
+      </div>
+      <div id="kahoot-status-badge" class="status-badge checking">
+        <span class="dot"></span> <span id="status-text">Verificando aba...</span>
+      </div>
+    </header>
+
+    <!-- Main Config Form -->
+    <div class="card form-card">
+
+      <!-- Theme Input -->
+      <div class="field-group">
+        <label for="themeInput">
+          <i class="fa-solid fa-lightbulb" style="color:#eab308;"></i> Tema ou Assunto do Jogo:
+        </label>
+        <input type="text" id="themeInput" placeholder="Ex: Inteligência Artificial, Marketing Digital, Python..."
+          autofocus />
+        <div class="quick-themes">
+          <span class="quick-chip" data-theme="Inteligência Artificial">🤖 IA</span>
+          <span class="quick-chip" data-theme="Marketing Digital">📈 Marketing</span>
+          <span class="quick-chip" data-theme="Programação em Python">🐍 Python</span>
+          <span class="quick-chip" data-theme="Excel e Fórmulas">📊 Excel</span>
+          <span class="quick-chip" data-theme="História do Brasil">🏛️ História</span>
+        </div>
+      </div>
+
+      <!-- Balanced Rules Badge -->
+      <div class="rules-card">
+        <div class="rule-item">
+          <i class="fa-solid fa-star" style="color:#fbbf24;"></i>
+          <span><strong>1ª Pergunta:</strong> Sempre Múltipla Escolha (Quiz)</span>
+        </div>
+        <div class="rule-item">
+          <i class="fa-solid fa-scale-balanced" style="color:#a78bfa;"></i>
+          <span><strong>1/3 Fácil, 1/3 Médio, 1/3 Difícil</strong> (balanceado)</span>
+        </div>
+        <div class="rule-item">
+          <i class="fa-solid fa-shuffle" style="color:#38bdf8;"></i>
+          <span><strong>Mescla:</strong> Múltipla Escolha + Verdadeiro/Falso</span>
+        </div>
+        <div class="rule-item">
+          <i class="fa-solid fa-ruler-combined" style="color:#4ade80;"></i>
+          <span><strong>Limites:</strong> Pergunta máx 120 chars • Respostas máx 75 chars</span>
+        </div>
+      </div>
+
+      <!-- Settings Row -->
+      <div class="fields-row" style="grid-template-columns: 1.2fr 1fr; margin-top: 10px;">
+        <!-- Number of Questions -->
+        <div class="field-col">
+          <label for="countInput">
+            <i class="fa-solid fa-list-ol" style="color:#38bdf8;"></i> Total Perguntas:
+          </label>
+          <div class="number-stepper">
+            <button type="button" class="stepper-btn" id="btnMinusCount">-</button>
+            <input type="number" id="countInput" value="6" min="1" max="30" />
+            <button type="button" class="stepper-btn" id="btnPlusCount">+</button>
+          </div>
+        </div>
+
+        <!-- Time per question -->
+        <div class="field-col">
+          <label for="timeSelect">
+            <i class="fa-regular fa-clock" style="color:#4ade80;"></i> Tempo:
+          </label>
+          <select id="timeSelect">
+            <option value="10">10s</option>
+            <option value="20" selected>20s (Padrão)</option>
+            <option value="30">30s</option>
+            <option value="60">60s</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Gemini API Key Collapsible (Optional) -->
+      <div class="api-accordion" style="margin-top: 10px;">
+        <button type="button" class="accordion-toggle" id="toggleApiKey">
+          <span><i class="fa-solid fa-key"></i> Chave Gemini API (Opcional)</span>
+          <i class="fa-solid fa-chevron-down" id="chevronIcon"></i>
+        </button>
+        <div class="accordion-body" id="apiKeyBody" style="display: none;">
+          <p class="api-help-text">
+            Use sua chave gratuita da Google AI Studio para gerar com Gemini AI. Se deixar em branco, o motor
+            inteligente offline é usado automaticamente.
+          </p>
+          <div class="api-input-wrap">
+            <input type="password" id="apiKeyInput" placeholder="Cole sua chave AIzaSy..." />
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="get-key-link"
+              title="Obter chave gratuita no Google AI Studio">
+              Obter Grátis <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons-group">
+        <button type="button" class="btn btn-primary" id="btnGenerateAndInject">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar e Inserir no Kahoot!
+        </button>
+        <div class="btn-subgroup">
+          <button type="button" class="btn btn-secondary" id="btnPreviewOnly">
+            <i class="fa-solid fa-eye"></i> Pré-visualizar
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnExportCsv"
+            title="Baixar planilha para importação em lote">
+            <i class="fa-solid fa-file-csv"></i> Baixar CSV
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Progress Status Indicator -->
+    <div class="card status-card" id="progressCard" style="display: none;">
+      <div class="status-header">
+        <span id="progressTitle"><i class="fa-solid fa-spinner fa-spin"></i> Processando...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <p class="progress-desc" id="progressDesc">Aguarde...</p>
+    </div>
+
+    <!-- Questions Preview List -->
+    <div class="preview-section" id="previewSection" style="display: none;">
+      <div class="preview-header">
+        <h3><i class="fa-solid fa-list-check"></i> Perguntas Geradas (<span id="previewCount">0</span>)</h3>
+        <button type="button" class="btn-text" id="btnInjectPreviewed">
+          <i class="fa-solid fa-play"></i> Inserir Agora
+        </button>
+      </div>
+      <div class="questions-list" id="questionsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Footer Tip -->
+    <footer class="app-footer">
+      <p><i class="fa-solid fa-circle-info"></i> Dica: Abra o criador do Kahoot! em
+        <strong>create.kahoot.it/creator</strong> para a injeção automática.</p>
+    </footer>
+
+  </div>
+
+  <script src="generator.js"></script>
+  <script src="popup.js"></script>
+</body>
+
+</html>

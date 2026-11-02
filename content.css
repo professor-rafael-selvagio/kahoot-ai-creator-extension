@@ -1,0 +1,450 @@
+/* content.css - Injected UI inside Kahoot! Creator Page */
+
+/* Floating Launcher Button */
+#kahoot-ai-floating-trigger {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  background: linear-gradient(135deg, #46178f, #8b5cf6);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 12px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(70, 23, 143, 0.6), 0 0 15px rgba(139, 92, 246, 0.5);
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+#kahoot-ai-floating-trigger:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 30px rgba(70, 23, 143, 0.8), 0 0 20px rgba(139, 92, 246, 0.8);
+  background: linear-gradient(135deg, #581c87, #9333ea);
+}
+
+#kahoot-ai-floating-trigger .badge-icon {
+  width: 26px;
+  height: 26px;
+  background: #fbbf24;
+  color: #1e1b4b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+/* Modal Overlay & Card */
+#kahoot-ai-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  background: rgba(15, 7, 32, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#kahoot-ai-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#kahoot-ai-modal-card {
+  width: 100%;
+  max-width: 460px;
+  background: #180d30;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 24px;
+  color: #ffffff;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(139, 92, 246, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#kahoot-ai-modal-overlay.active #kahoot-ai-modal-card {
+  transform: scale(1);
+}
+
+/* Modal Header */
+.kahoot-ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 14px;
+}
+
+.kahoot-ai-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kahoot-ai-logo {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #46178f, #8b5cf6);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.kahoot-ai-title h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.kahoot-ai-title p {
+  font-size: 12px;
+  color: #c4b5fd;
+  margin: 2px 0 0 0;
+}
+
+.kahoot-ai-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.kahoot-ai-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Body Fields */
+.kahoot-ai-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kahoot-ai-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.kahoot-ai-field input[type="text"],
+.kahoot-ai-field select,
+.kahoot-ai-field input[type="password"] {
+  background: #251648;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.kahoot-ai-field input[type="text"]:focus,
+.kahoot-ai-field select:focus,
+.kahoot-ai-field input[type="password"]:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+
+.kahoot-ai-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+/* Modal Buttons */
+.kahoot-ai-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.kahoot-ai-btn {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.kahoot-ai-btn-primary {
+  background: linear-gradient(135deg, #46178f, #8b5cf6);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.kahoot-ai-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(139, 92, 246, 0.6);
+  filter: brightness(1.1);
+}
+
+.kahoot-ai-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.kahoot-ai-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.kahoot-ai-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+/* Live Injection Progress Overlay Banner */
+#kahoot-ai-live-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000001;
+  background: #180d30;
+  border: 1.5px solid #8b5cf6;
+  border-radius: 14px;
+  padding: 12px 22px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { top: -60px; opacity: 0; }
+  to { top: 20px; opacity: 1; }
+}
+
+#kahoot-ai-live-banner .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+
+
+/* Additional complete modal styles matching popup.html */
+.kahoot-ai-quick-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.kahoot-ai-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kahoot-ai-chip:hover, .kahoot-ai-chip.active {
+  background: rgba(139, 92, 246, 0.35);
+  color: #ffffff;
+  border-color: #a78bfa;
+}
+
+.kahoot-ai-rules-card {
+  background: rgba(70, 23, 143, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kahoot-ai-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.kahoot-ai-stepper {
+  display: flex;
+  align-items: center;
+  background: #251648;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.kahoot-ai-stepper-btn {
+  background: transparent;
+  border: none;
+  color: #c4b5fd;
+  width: 28px;
+  height: 34px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.kahoot-ai-stepper-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.kahoot-ai-stepper input {
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  padding: 0;
+}
+
+.kahoot-ai-accordion {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.kahoot-ai-accordion-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #a78bfa;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kahoot-ai-accordion-body {
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.kahoot-ai-api-help {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0 0 6px 0;
+}
+
+.kahoot-ai-api-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.kahoot-ai-api-wrap input {
+  flex: 1;
+}
+
+.kahoot-ai-key-link {
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.kahoot-ai-key-link:hover {
+  background: #8b5cf6;
+  color: #fff;
+}
+
+.kahoot-ai-preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.kahoot-ai-btn-text {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kahoot-ai-btn-text:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.kahoot-ai-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
