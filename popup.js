@@ -51,24 +51,12 @@ function loadStoredSettings() {
     }
     if (data.lastTheme) {
       document.getElementById('themeInput').value = data.lastTheme;
-      highlightMatchingChip(data.lastTheme);
     }
     if (data.countInput) {
       document.getElementById('countInput').value = data.countInput;
     }
     if (data.timeSelect) {
       document.getElementById('timeSelect').value = data.timeSelect;
-    }
-  });
-}
-
-function highlightMatchingChip(theme) {
-  const trimmed = (theme || '').trim();
-  document.querySelectorAll('.quick-chip').forEach(chip => {
-    if (chip.getAttribute('data-theme') === trimmed) {
-      chip.classList.add('active');
-    } else {
-      chip.classList.remove('active');
     }
   });
 }
@@ -96,20 +84,8 @@ function setupEventListeners() {
     }
   });
 
-  // Quick theme chips
-  document.querySelectorAll('.quick-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.quick-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      themeInput.value = chip.getAttribute('data-theme');
-      saveFormState();
-      themeInput.focus();
-    });
-  });
-
-  // Input listener on themeInput to auto-update chips
+  // Input listener on themeInput to auto-save state
   themeInput.addEventListener('input', () => {
-    highlightMatchingChip(themeInput.value);
     saveFormState();
   });
 

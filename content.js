@@ -65,14 +65,7 @@ function initOnPageWidget() {
         <label for="kahoot-ai-theme">
           <span style="color:#eab308;">💡</span> Tema ou Assunto do Jogo:
         </label>
-        <input type="text" id="kahoot-ai-theme" placeholder="Ex: Inteligência Artificial, Marketing Digital, Python..." autofocus />
-        <div class="kahoot-ai-quick-themes">
-          <span class="kahoot-ai-chip" data-theme="Inteligência Artificial">🤖 IA</span>
-          <span class="kahoot-ai-chip" data-theme="Marketing Digital">📈 Marketing</span>
-          <span class="kahoot-ai-chip" data-theme="Programação em Python">🐍 Python</span>
-          <span class="kahoot-ai-chip" data-theme="Excel e Fórmulas">📊 Excel</span>
-          <span class="kahoot-ai-chip" data-theme="História do Brasil">🏛️ História</span>
-        </div>
+        <input type="text" id="kahoot-ai-theme" placeholder="Ex: Banco de Dados MySQL, Inteligência Artificial, História..." autofocus />
       </div>
 
       <!-- Balanced Rules Card -->
@@ -171,9 +164,6 @@ function initOnPageWidget() {
     if (data.geminiApiKey) document.getElementById('kahoot-ai-apikey').value = data.geminiApiKey;
     if (data.lastTheme) {
       document.getElementById('kahoot-ai-theme').value = data.lastTheme;
-      document.querySelectorAll('.kahoot-ai-chip').forEach(c => {
-        if (c.getAttribute('data-theme') === data.lastTheme) c.classList.add('active');
-      });
     }
     if (data.countInput) document.getElementById('kahoot-ai-count').value = data.countInput;
     if (data.timeSelect) document.getElementById('kahoot-ai-time').value = data.timeSelect;
@@ -190,17 +180,6 @@ function initOnPageWidget() {
 
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.remove('active');
-  });
-
-  // Quick Chips in modal
-  document.querySelectorAll('.kahoot-ai-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.kahoot-ai-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const themeField = document.getElementById('kahoot-ai-theme');
-      themeField.value = chip.getAttribute('data-theme');
-      themeField.focus();
-    });
   });
 
   // Stepper buttons in modal

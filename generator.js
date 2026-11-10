@@ -433,6 +433,90 @@ function createThemedDynamicQuestion(theme, difficulty, isTrueFalse, timeLimit) 
 }
 
 function getCategorizedThematicBank(norm, rawTheme) {
+  // Banco de Dados & MySQL / SQL
+  if (
+    norm.includes('banco de dados') ||
+    norm.includes('mysql') ||
+    norm.includes('sql') ||
+    norm.includes('sgbd') ||
+    norm.includes('database') ||
+    norm.includes('postgres') ||
+    norm.includes('postgresql') ||
+    norm.includes('mariadb') ||
+    norm.includes('oracle') ||
+    norm.includes('nosql') ||
+    norm.includes('mongodb')
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'No MySQL e em bancos de dados relacionais, o que significa SQL?',
+        answers: ['Structured Query Language', 'Simple Quick Logic', 'System Query List', 'Sequential Query Loop'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'No MySQL, o comando SELECT é utilizado para consultar e recuperar dados.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'Em um banco de dados relacional, uma tabela só pode conter uma única linha.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual cláusula SQL é utilizada para filtrar registros em uma consulta?',
+        answers: ['WHERE', 'ORDER BY', 'GROUP BY', 'LIMIT'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'A Chave Primária (Primary Key) garante unicidade aos registros da tabela.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'No MySQL, qual comando insere novos registros em uma tabela existente?',
+        answers: ['INSERT INTO', 'UPDATE', 'ADD ROW', 'SELECT INTO'],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'O comando DROP TABLE apaga apenas os dados e preserva a estrutura da tabela.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Qual comando JOIN retorna todas as linhas da esquerda e as correspondentes?',
+        answers: ['LEFT JOIN', 'INNER JOIN', 'RIGHT JOIN', 'CROSS JOIN'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Transações ACID asseguram Atomicidade, Consistência, Isolamento e Durabilidade.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
   // Python & Programação
   if (norm.includes('python') || norm.includes('programaç') || norm.includes('codigo') || norm.includes('dev')) {
     return [
@@ -578,7 +662,7 @@ function getCategorizedThematicBank(norm, rawTheme) {
   }
 
   // Excel & Planilhas
-  if (norm.includes('excel') || norm.includes('planilha') || norm.includes('dados') || norm.includes('procv')) {
+  if (norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets') || norm.includes('procv') || norm.includes('procx') || norm.includes('fórmula') || norm.includes('calc')) {
     return [
       // FÁCIL
       {
@@ -649,8 +733,88 @@ function getCategorizedThematicBank(norm, rawTheme) {
     ];
   }
 
+  // História do Brasil & História Geral
+  if (
+    norm.includes('história') ||
+    norm.includes('historia') ||
+    norm.includes('brasil colônia') ||
+    norm.includes('república') ||
+    norm.includes('republica') ||
+    norm.includes('independência') ||
+    norm.includes('independencia')
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'Em que ano ocorreu a Proclamação da Independência do Brasil?',
+        answers: ['1822', '1500', '1889', '1922'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'Pedro Álvares Cabral comandou a frota que chegou ao Brasil em 1500.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A capital do Brasil sempre foi Brasília desde o ano do descobrimento.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Quem proclamou a República no Brasil em 15 de novembro de 1889?',
+        answers: ['Marechal Deodoro da Fonseca', 'Dom Pedro II', 'Tiradentes', 'Duque de Caxias'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'A Lei Áurea, assinada pela Princesa Isabel em 1888, aboliu a escravidão.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual movimento revolucionário em Minas Gerais lutou contra os impostos da Coroa?',
+        answers: ['Inconfidência Mineira', 'Revolução Farroupilha', 'Cabanagem', 'Sabinada'],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'O Tratado de Tordesilhas dividiu as novas terras entre Portugal e a França.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Em que ano foi promulgada a atual Constituição Cidadã do Brasil?',
+        answers: ['1988', '1964', '1934', '1985'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'A Revolução Constitucionalista de 1932 ocorreu no estado de São Paulo.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
   // Inteligência Artificial
-  if (norm.includes('ia') || norm.includes('inteligência') || norm.includes('artificial') || norm.includes('prompt')) {
+  if (/\b(ia|ai)\b/i.test(norm) || norm.includes('inteligência') || norm.includes('inteligencia') || norm.includes('artificial') || norm.includes('machine learning') || norm.includes('deep learning') || norm.includes('llm') || norm.includes('chatgpt') || norm.includes('prompt')) {
     return [
       // FÁCIL
       {
@@ -841,4 +1005,17 @@ function exportToKahootCSV(questions, theme = 'quiz') {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    generateQuestionsLocal,
+    generateQuestionsWithGemini,
+    getCategorizedThematicBank,
+    ensureFirstQuestionIsQuiz,
+    sanitizeQuestionText,
+    sanitizeAnswerText,
+    exportToKahootCSV,
+    getDifficultyDistribution
+  };
 }
