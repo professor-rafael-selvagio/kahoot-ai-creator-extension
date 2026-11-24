@@ -46,16 +46,16 @@ async function checkActiveTab() {
 
 function loadStoredSettings() {
   chrome.storage.local.get(['geminiApiKey', 'lastTheme', 'countInput', 'timeSelect'], (data) => {
-    if (data.geminiApiKey) {
+    if (data && data.geminiApiKey) {
       document.getElementById('apiKeyInput').value = data.geminiApiKey;
     }
-    if (data.lastTheme) {
+    if (data && data.lastTheme) {
       document.getElementById('themeInput').value = data.lastTheme;
     }
-    if (data.countInput) {
+    if (data && data.countInput) {
       document.getElementById('countInput').value = data.countInput;
     }
-    if (data.timeSelect) {
+    if (data && data.timeSelect) {
       document.getElementById('timeSelect').value = data.timeSelect;
     }
   });

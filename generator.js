@@ -127,6 +127,93 @@ function sanitizeAnswerText(raw, fallback = 'Opção') {
 }
 
 /**
+ * Normalizes common keyboard typos in software names, features, and functions
+ * (e.g. qord -> Word, ecxel -> Excel, fundao -> função, negrtio -> negrito)
+ */
+function normalizeThemeText(text) {
+  if (!text) return '';
+  let str = String(text).trim();
+
+  // Software and Tool typos:
+  str = str.replace(/\b(qord|wrod|wprld|msword|ms-word)\b/gi, 'Word');
+  str = str.replace(/\b(ecxel|exel|xcel|exell|eccel|msexcel)\b/gi, 'Excel');
+  str = str.replace(/\b(pwerpoint|power\s*point|pwoerpoint|powepoint|ppt|pptx)\b/gi, 'PowerPoint');
+  str = str.replace(/\b(pyhton|pyton)\b/gi, 'Python');
+  str = str.replace(/\b(javascrip|javascrit)\b/gi, 'JavaScript');
+
+  // Function / feature typos:
+  str = str.replace(/\bfund[aã]o\b/gi, 'função');
+  str = str.replace(/\bfunc[aã]o\b/gi, 'função');
+  str = str.replace(/\bfuncso\b/gi, 'função');
+  str = str.replace(/\bfurmula\b/gi, 'fórmula');
+
+  // Common formatting typos:
+  str = str.replace(/\bnegrtio\b/gi, 'negrito');
+  str = str.replace(/\bitalico\b/gi, 'itálico');
+
+  return str;
+}
+
+/**
+ * Analyzes the user's theme input and identifies if there is a specific subtopic/function
+ */
+function parseThemeDetails(rawTheme) {
+  let theme = normalizeThemeText(rawTheme);
+  if (!theme) return { mainTopic: 'Geral', subTopic: null, isSpecific: false, cleanTheme: '' };
+
+  // 1. Explicit delimiters: "-", ":", "—", "/", "|", "sobre", "focado em", "com foco em"
+  const delimMatch = theme.match(/^(.+?)\s*(?:[-–—|/:]|\bsobre\b|\bfocado em\b|\bcom foco em\b)\s*(.+)$/i);
+  if (delimMatch) {
+    return {
+      mainTopic: delimMatch[1].trim(),
+      subTopic: delimMatch[2].trim(),
+      isSpecific: true,
+      cleanTheme: theme
+    };
+  }
+
+  // 2. Patterns like "Função X no/do Excel" or "Recurso X no/do Python"
+  const reverseMatch = theme.match(/^(.+?)\s+(?:no|na|do|da|em)\s+([a-zA-Z0-9À-ÿ\s]+)$/i);
+  if (reverseMatch) {
+    return {
+      mainTopic: reverseMatch[2].trim(),
+      subTopic: reverseMatch[1].trim(),
+      isSpecific: true,
+      cleanTheme: theme
+    };
+  }
+
+  // 3. Patterns like "Excel funcao MAIOR", "Excel formula SOMA", "Excel recurso X"
+  const keywordSubMatch = theme.match(/^([a-zA-Z0-9À-ÿ]+)\s+(fun[cç][aã]o|f[oó]rmula|comando|m[eé]todo|recurso|propriedade|tag|operador|conceito)\s+(.+)$/i);
+  if (keywordSubMatch) {
+    return {
+      mainTopic: keywordSubMatch[1].trim(),
+      subTopic: `${keywordSubMatch[2]} ${keywordSubMatch[3]}`.trim(),
+      isSpecific: true,
+      cleanTheme: theme
+    };
+  }
+
+  // 4. Known tools/software prefix followed by anything specific (e.g. "Excel MAIOR", "Excel PROCV", "Python Dicionários", "Git Rebase")
+  const knownPrefixMatch = theme.match(/^(Excel|Word|PowerPoint|Access|Photoshop|Illustrator|Python|JavaScript|JS|TypeScript|TS|HTML|CSS|SQL|MySQL|PostgreSQL|PHP|Java|C#|C\+\+|Git|Linux|Windows|Docker|React|Node|Vue|Angular)\s+(.+)$/i);
+  if (knownPrefixMatch) {
+    return {
+      mainTopic: knownPrefixMatch[1].trim(),
+      subTopic: knownPrefixMatch[2].trim(),
+      isSpecific: true,
+      cleanTheme: theme
+    };
+  }
+
+  return {
+    mainTopic: theme,
+    subTopic: null,
+    isSpecific: false,
+    cleanTheme: theme
+  };
+}
+
+/**
  * Generates questions using Google Gemini API
  */
 async function generateQuestionsWithGemini(apiKey, { theme, count = 5, timeLimit = 20 }) {
@@ -135,10 +222,37 @@ async function generateQuestionsWithGemini(apiKey, { theme, count = 5, timeLimit
   }
 
   const { easyCount, mediumCount, hardCount } = getDifficultyDistribution(count);
+  const details = parseThemeDetails(theme);
+
+  let subtopicInstructions = '';
+  if (details.isSpecific && details.subTopic) {
+    subtopicInstructions = `
+═══════════════════════════════════════════════════════════════════════════
+ATENÇÃO MÁXIMA E OBRIGATÓRIA: FOCO EXCLUSIVO NO RECORTE "${details.subTopic}"!
+- Contexto Macro: "${details.mainTopic}"
+- TÓPICO EXATO / FUNÇÃO SOLICITADA: "${details.subTopic}"
+
+REGRAS RÍGIDAS DE CONTEÚDO (NÃO DESVIE DO FOCO):
+1. TODAS as ${count} perguntas (100%) DEVEM ser estritamente e exclusivamente sobre "${details.subTopic}" (no contexto de "${details.mainTopic}").
+2. É TERMINANTEMENTE PROIBIDO gerar perguntas genéricas sobre "${details.mainTopic}" ou sobre outras funções diferentes!
+   - O foco obrigatório é estritamente sobre "${details.subTopic}":
+     * NÃO pergunte sobre o software em geral, quem o criou, atalhos gerais de salvar, ou outras ferramentas e fórmulas não relacionadas.
+     * TODAS as perguntas devem testar o funcionamento específico e exclusivo de "${details.subTopic}" (sua sintaxe, seus parâmetros, argumentos, comportamento em casos práticos, retorno, erros e pegadinhas).
+3. Cada uma das ${count} perguntas deve explorar um ângulo diferente de "${details.subTopic}" (básico, intermediário e avançado).
+═══════════════════════════════════════════════════════════════════════════`;
+  } else {
+    subtopicInstructions = `
+═══════════════════════════════════════════════════════════════════════════
+FOCO NO TEMA GERAL "${details.cleanTheme}":
+- O tema solicitado é abrangente: "${details.cleanTheme}".
+- Crie perguntas balanceadas que cubram os conceitos principais, ferramentas essenciais e boas práticas gerais de "${details.cleanTheme}".
+═══════════════════════════════════════════════════════════════════════════`;
+  }
 
   const prompt = `Você é um especialista em educação e criação de quizzes para o Kahoot!.
-Gere exatamente ${count} perguntas sobre o tema: "${theme}".
+Gere exatamente ${count} perguntas sobre o tema: "${details.cleanTheme}".
 Idioma: Português (Brasil).
+${subtopicInstructions}
 
 DISTRIBUIÇÃO RIGOROSA DE DIFICULDADE (Exatamente 1/3 por nível):
 - ${easyCount} perguntas de nível Fácil ("Fácil")
@@ -146,7 +260,7 @@ DISTRIBUIÇÃO RIGOROSA DE DIFICULDADE (Exatamente 1/3 por nível):
 - ${hardCount} perguntas de nível Difícil ("Difícil")
 
 REGRAS E LIMITES CRUCIAIS DO KAHOOT! (OBRIGATÓRIO):
-1. "question": O texto da pergunta DEVE TER ENTRE 40 E 95 CARACTERES (NUNCA ULTRAPASSE 110 CARACTERES. O limite do Kahoot é 120 caracteres e perguntas maiores são bloqueadas). NÃO coloque numeração como "1." no início da pergunta. Seja conciso e direto.
+1. "question": O texto da pergunta DEVE TER ENTRE 40 E 95 CARACTERES (NUNCA ULTRAPASSE 110 CARACTERES. O limite do Kahoot é 120 caracteres e perguntas maiores são bloqueadas). NÃO coloque numeração como "1." no início da pergunta. Seja conciso e direto. Garanta que o enunciado teste diretamente "${details.isSpecific ? details.subTopic : details.cleanTheme}".
 2. "answers": Cada alternativa DEVE TER NO MÁXIMO 65 CARACTERES (limite do Kahoot é 75).
 3. MESCLA DE TIPOS DE PERGUNTAS (Múltipla Escolha e Verdadeiro/Falso):
    - A PRIMEIRA PERGUNTA (índice 0) DEVE SER OBRIGATORIAMENTE de Múltipla Escolha ("type": "quiz") com 4 alternativas!
@@ -297,9 +411,10 @@ async function directGeminiFetch(apiKey, prompt) {
  */
 function generateQuestionsLocal({ theme, count = 5, timeLimit = 20 }) {
   const { easyCount, mediumCount, hardCount } = getDifficultyDistribution(count);
-  const normalizedTheme = theme.toLowerCase().trim();
+  const cleanTheme = normalizeThemeText(theme);
+  const normalizedTheme = cleanTheme.toLowerCase().trim();
 
-  const bank = getCategorizedThematicBank(normalizedTheme, theme);
+  const bank = getCategorizedThematicBank(normalizedTheme, cleanTheme);
 
   const easyPool = bank.filter(q => q.difficulty === 'Fácil');
   const mediumPool = bank.filter(q => q.difficulty === 'Médio');
@@ -308,9 +423,9 @@ function generateQuestionsLocal({ theme, count = 5, timeLimit = 20 }) {
   const selected = [];
 
   // Pick exact 1/3 for each difficulty
-  selected.push(...pickOrGenerate(easyPool, easyCount, 'Fácil', theme, timeLimit));
-  selected.push(...pickOrGenerate(mediumPool, mediumCount, 'Médio', theme, timeLimit));
-  selected.push(...pickOrGenerate(hardPool, hardCount, 'Difícil', theme, timeLimit));
+  selected.push(...pickOrGenerate(easyPool, easyCount, 'Fácil', cleanTheme, timeLimit));
+  selected.push(...pickOrGenerate(mediumPool, mediumCount, 'Médio', cleanTheme, timeLimit));
+  selected.push(...pickOrGenerate(hardPool, hardCount, 'Difícil', cleanTheme, timeLimit));
 
   // Normalize strict character limits and types
   const finalQuestions = selected.map((q, idx) => {
@@ -362,6 +477,80 @@ function pickOrGenerate(pool, needed, difficulty, theme, timeLimit) {
 }
 
 function createThemedDynamicQuestion(theme, difficulty, isTrueFalse, timeLimit) {
+  const norm = (theme || '').toLowerCase();
+  const isSoftwareOrFeature = /\b(word|excel|powerpoint|photoshop|illustrator|canva|windows|linux|função|funcao|fórmula|formula|comando|atalho|negrito|itálico|sublinhado|fonte|parágrafo|tabela|filtro|recurso)\b/i.test(norm);
+
+  if (isSoftwareOrFeature) {
+    if (isTrueFalse) {
+      const swTf = {
+        'Fácil': [
+          { q: `No uso de ${theme}, o comando pode ser ativado diretamente na barra de ferramentas.`, correct: 0 },
+          { q: `Aplicar ${theme} apaga e destrói permanentemente o arquivo em edição.`, correct: 1 }
+        ],
+        'Médio': [
+          { q: `A aplicação de ${theme} pode ser revertida rapidamente com o atalho Ctrl + Z.`, correct: 0 },
+          { q: `É obrigatório reiniciar o computador para que a ação de ${theme} tenha efeito.`, correct: 1 }
+        ],
+        'Difícil': [
+          { q: `Para aplicar ${theme} com precisão, a boa prática exige selecionar o item antes.`, correct: 0 },
+          { q: `O uso de ${theme} bloqueia a impressão e a exportação do documento.`, correct: 1 }
+        ]
+      };
+      const list = swTf[difficulty] || swTf['Médio'];
+      const pick = list[Math.floor(Math.random() * list.length)];
+      return {
+        type: 'true_false',
+        difficulty: difficulty,
+        question: sanitizeQuestionText(pick.q),
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: pick.correct,
+        time: timeLimit
+      };
+    } else {
+      const swQuiz = {
+        'Fácil': {
+          q: `Qual é o objetivo principal ao utilizar o recurso de ${theme}?`,
+          a: [
+            `Aplicar a formatação ou comando desejado ao item selecionado`,
+            `Excluir o arquivo permanentemente da máquina`,
+            `Formatar o disco rígido do computador`,
+            `Bloquear a digitação de novos caracteres`
+          ],
+          c: 0
+        },
+        'Médio': {
+          q: `Para aplicar ou ajustar ${theme}, qual ação inicial é necessária?`,
+          a: [
+            `Selecionar o texto ou elemento que receberá a alteração`,
+            `Desconectar o computador da internet`,
+            `Substituir o teclado por outro modelo`,
+            `Encerrar o sistema operacional`
+          ],
+          c: 0
+        },
+        'Difícil': {
+          q: `Qual comando padrão desfaz uma ação indesejada ao aplicar ${theme}?`,
+          a: [
+            `Ctrl + Z (Desfazer)`,
+            `Alt + F4 (Fechar)`,
+            `Ctrl + Alt + Del`,
+            `Shift + Delete`
+          ],
+          c: 0
+        }
+      };
+      const pick = swQuiz[difficulty] || swQuiz['Médio'];
+      return {
+        type: 'quiz',
+        difficulty: difficulty,
+        question: sanitizeQuestionText(pick.q),
+        answers: pick.a.map(a => sanitizeAnswerText(a)),
+        correctIndex: pick.c,
+        time: timeLimit
+      };
+    }
+  }
+
   if (isTrueFalse) {
     const tfTemplates = {
       'Fácil': [
@@ -661,8 +850,362 @@ function getCategorizedThematicBank(norm, rawTheme) {
     ];
   }
 
-  // Excel & Planilhas
-  if (norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets') || norm.includes('procv') || norm.includes('procx') || norm.includes('fórmula') || norm.includes('calc')) {
+  // Excel - Função MENOR
+  if (
+    ((norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets')) &&
+      (/\b(menor|k-ésimo menor|k-esimo menor)\b/i.test(norm))) ||
+    /\b(funcao menor|função menor|formula menor|fórmula menor)\b/i.test(norm)
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'No Excel, qual é a principal finalidade da função MENOR?',
+        answers: [
+          'Retornar o k-ésimo menor valor de um conjunto de dados',
+          'Subtrair todos os números negativos da planilha',
+          'Reduzir o tamanho da fonte das células selecionadas',
+          'Contar quantas células estão em branco'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A fórmula =MENOR(A1:A10; 1) retorna o mesmo valor que a função MÍNIMO.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A função MENOR exige dois argumentos: a matriz e a posição k desejada.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual fórmula retorna o 2º menor valor do intervalo C1:C20 no Excel?',
+        answers: [
+          '=MENOR(C1:C20; 2)',
+          '=MÍNIMO(C1:C20; 2)',
+          '=SE.MENOR(C1:C20; 2)',
+          '=SUBTOTAL(C1:C20; 2)'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'No Excel, a função MENOR ignora valores lógicos e texto na matriz.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'O que o argumento k representa na função =MENOR(matriz; k)?',
+        answers: [
+          'A posição ordinal do menor valor (ex: 1º menor, 2º menor)',
+          'A porcentagem de desconto a aplicar nos dados',
+          'O limite máximo permitido na soma dos valores',
+          'O número de casas decimais do resultado final'
+        ],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Se k for maior que a contagem de números na matriz, MENOR retorna #NÚM!.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Para a lista [15, 3, 7, 3, 20], o que a fórmula =MENOR(lista; 2) retorna?',
+        answers: [
+          '3',
+          '7',
+          '15',
+          '#N/D'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Para encontrar o 3º menor valor, utiliza-se k = 3 na função MENOR.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
+  // Excel - Função MAIOR
+  if (
+    ((norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets')) &&
+      (/\b(maior|k-ésimo maior|k-esimo maior)\b/i.test(norm))) ||
+    /\b(funcao maior|função maior|formula maior|fórmula maior)\b/i.test(norm)
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'No Excel, qual é o papel principal da função MAIOR?',
+        answers: [
+          'Retornar o k-ésimo maior valor de uma matriz',
+          'Somar todos os números maiores que dez',
+          'Contar quantas células contêm texto',
+          'Converter letras minúsculas em maiúsculas'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A fórmula =MAIOR(A1:A10; 1) equivale ao resultado da função MÁXIMO.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A função MAIOR exige informar um intervalo de dados e a posição k.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual fórmula retorna o 2º maior valor do intervalo B2:B20 no Excel?',
+        answers: [
+          '=MAIOR(B2:B20; 2)',
+          '=MÁXIMO(B2:B20; 2)',
+          '=SE.MAIOR(B2:B20; 2)',
+          '=ORDEM(B2:B20; 2)'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'A função MAIOR permite retornar posições do ranking como o 3º ou 4º maior.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'No Excel, o que o segundo argumento k representa na função MAIOR?',
+        answers: [
+          'A posição ordinal do valor desejado no ranking',
+          'O fator de multiplicação dos dados',
+          'A porcentagem de acréscimo ao total',
+          'A quantidade de casas decimais do resultado'
+        ],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Se k for maior que o número de células com dados, MAIOR retorna #NÚM!.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Para a lista [10, 20, 20, 5], o que a fórmula =MAIOR(lista; 2) retorna?',
+        answers: [
+          '20',
+          '10',
+          '15',
+          '#N/D'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'A função MAIOR ignora células de texto vazias dentro da matriz.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
+  // Excel - PROCV / PROCX
+  if (
+    ((norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets')) &&
+      (/\b(procv|procx|proch)\b/i.test(norm))) ||
+    /\b(funcao procv|função procv|formula procv|fórmula procv|funcao procx|função procx)\b/i.test(norm)
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'Qual é o objetivo principal da função PROCV no Excel?',
+        answers: [
+          'Pesquisar valor na 1ª coluna e retornar dado da linha',
+          'Somar valores maiores que a média',
+          'Criar gráficos dinâmicos automáticos',
+          'Contar o número de caracteres de um texto'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'O PROCV realiza busca vertical em colunas da tabela no Excel.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'O quarto argumento 0 ou FALSO no PROCV exige correspondência exata.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'O que o PROCV retorna quando o valor procurado não é localizado?',
+        answers: ['#N/D', '#VALOR!', '#REF!', '#NULO!'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'O PROCV consegue pesquisar valores à esquerda da coluna de pesquisa.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual função moderna do Excel substitui o PROCV sem limitações à esquerda?',
+        answers: ['PROCX', 'SEERRO', 'DESLOC', 'INDIRETO'],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Se omitir o quarto argumento no PROCV, ele assume busca aproximada.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Qual erro o PROCV exibe se o índice da coluna for menor que 1?',
+        answers: ['#VALOR!', '#REF!', '#N/D', '#NOME?'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'A combinação ÍNDICE e CORRESP é imune à inserção de novas colunas.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
+  // Excel - Função SE / IF (Funções Condicionais e Lógicas)
+  if (
+    ((norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets')) &&
+      (/\b(se|if|condicional|condicionais|lógica|logica)\b/i.test(norm) || norm.includes('funcao se') || norm.includes('função se') || norm.includes('funcao if') || norm.includes('função if'))) ||
+    /\b(funcao if|função if|funcao se|função se|formula se|fórmula se|formula if|fórmula if)\b/i.test(norm)
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'Quantos argumentos principais a função SE() (IF) possui no Excel?',
+        answers: ['Exatamente 3', 'Apenas 1', 'Exatamente 5', 'Não tem limite'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'No Excel em português, a função IF equivale à função SE.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'O primeiro argumento da função SE é o teste lógico avaliado.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'O que a fórmula =SE(10>5; "Sim"; "Não") retorna no Excel?',
+        answers: ['Sim', 'Não', 'VERDADEIRO', '#VALOR!'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'Se omitir o argumento de valor falso na função SE, o Excel exibe FALSO.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Como se chama o uso de uma função SE dentro de outra função SE?',
+        answers: ['SE Aninhada', 'SE Duplicada', 'SE Recursiva', 'SE Binária'],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'A função SE aceita combinar condições usando as funções E() e OU().',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Qual fórmula testa se A1>10 e B1<20 retornando "OK" ou "Erro"?',
+        answers: [
+          '=SE(E(A1>10;B1<20);"OK";"Erro")',
+          '=SE(OU(A1>10;B1<20);"OK";"Erro")',
+          '=IF(A1>10 AND B1<20;"OK")',
+          '=SE.E(A1>10;B1<20);"OK";"Erro")'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'No Excel 365, a função SES substitui múltiplos SEs aninhados.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      }
+    ];
+  }
+
+  // Excel & Planilhas (Geral)
+  if (norm.includes('excel') || norm.includes('planilha') || norm.includes('sheets') || norm.includes('fórmula') || norm.includes('calc')) {
     return [
       // FÁCIL
       {
@@ -727,6 +1270,164 @@ function getCategorizedThematicBank(norm, rawTheme) {
         type: 'true_false',
         difficulty: 'Difícil',
         question: 'Funções matriciais dinâmicas não expandem em células vizinhas.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      }
+    ];
+  }
+
+  // Microsoft Word - Negrito e Formatação de Fonte
+  if (
+    ((norm.includes('word') || norm.includes('texto') || norm.includes('documento')) &&
+      (/\b(negrito|bold|destaque|fonte|formata[cç][aã]o)\b/i.test(norm))) ||
+    /\b(negrito|bold)\b/i.test(norm)
+  ) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'Qual é o principal atalho no Word em português para aplicar Negrito?',
+        answers: ['Ctrl + N', 'Ctrl + B', 'Ctrl + I', 'Ctrl + S'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'O recurso Negrito deixa as letras mais espessas para dar ênfase visual.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'Em português, o botão de Negrito na faixa de opções do Word tem a letra N.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Em qual grupo da guia Página Inicial fica o botão de Negrito no Word?',
+        answers: ['Fonte', 'Parágrafo', 'Estilos', 'Edição'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'No Word em português, o atalho Ctrl + B aplica Negrito ao texto selecionado.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Como remover o Negrito de uma palavra já formatada no Word?',
+        answers: [
+          'Selecionar a palavra e pressionar Ctrl + N novamente',
+          'Apagar e redigitar a palavra do zero',
+          'Pressionar a tecla Esc duas vezes',
+          'Mudar a cor da fonte para preto automático'
+        ],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'É possível aplicar Negrito, Itálico e Sublinhado juntos no mesmo texto.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'No Word em inglês, qual tecla de atalho é usada para aplicar Bold (Negrito)?',
+        answers: ['Ctrl + B', 'Ctrl + N', 'Ctrl + O', 'Alt + B'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'Aplicar Negrito aumenta automaticamente o tamanho da fonte em pontos.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      }
+    ];
+  }
+
+  // Microsoft Word (Geral)
+  if (norm.includes('word') || norm.includes('docx') || norm.includes('processador de texto')) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: 'Qual é a principal função do Microsoft Word?',
+        answers: [
+          'Criar e formatar documentos de texto',
+          'Desenvolver bancos de dados relacionais',
+          'Editar vídeos e trilhas sonoras',
+          'Gerenciar redes de computadores'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'No Word, o atalho Ctrl + B salva as alterações no documento em português.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: 'A extensão de arquivo padrão dos documentos modernos do Word é .docx.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual atalho alinha o parágrafo de forma Justificada no Word em português?',
+        answers: ['Ctrl + J', 'Ctrl + E', 'Ctrl + Q', 'Ctrl + G'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: 'O corretor ortográfico do Word sublinha erros gramaticais em azul.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: 'Qual guia permite alterar as margens e a orientação da página no Word?',
+        answers: ['Layout', 'Inserir', 'Design', 'Exibir'],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'A quebra de seção permite ter páginas em retrato e paisagem no mesmo arquivo.',
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: 'Qual recurso do Word replica automaticamente a formatação de um trecho?',
+        answers: ['Pincel de Formatação', 'AutoCorreção', 'Mala Direta', 'SmartArt'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: 'O Word impede a inserção de tabelas com mais de cinco colunas.',
         answers: ['Verdadeiro', 'Falso'],
         correctIndex: 1
       }
@@ -885,7 +1586,95 @@ function getCategorizedThematicBank(norm, rawTheme) {
     ];
   }
 
-  // Default Bank (Geral / Qualquer Tema)
+  // Recursos de Software, Ferramentas ou Comandos (Fallback Contextual Inteligente)
+  const isSoftwareOrFeature = /\b(word|excel|powerpoint|photoshop|illustrator|canva|windows|linux|função|funcao|fórmula|formula|comando|atalho|negrito|itálico|sublinhado|fonte|parágrafo|tabela|filtro|recurso|software|aplicativo|ferramenta)\b/i.test(norm);
+  if (isSoftwareOrFeature) {
+    return [
+      // FÁCIL
+      {
+        type: 'quiz',
+        difficulty: 'Fácil',
+        question: `Qual é o objetivo principal ao utilizar o recurso de ${rawTheme}?`,
+        answers: [
+          'Aplicar a ação ou formatação desejada ao item selecionado',
+          'Bloquear permanentemente a edição do documento',
+          'Excluir o aplicativo do computador',
+          'Impedir o uso de teclado e mouse'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: `No uso de ${rawTheme}, os comandos podem ser ativados na barra de ferramentas.`,
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Fácil',
+        question: `O comando ${rawTheme} destrói e apaga todo o histórico do computador.`,
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      },
+      // MÉDIO
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: `Para aplicar ou ajustar ${rawTheme}, qual ação inicial é necessária?`,
+        answers: [
+          'Selecionar o elemento ou texto que receberá a alteração',
+          'Desconectar o computador da rede de internet',
+          'Fechar todos os outros programas abertos',
+          'Reiniciar o sistema operacional'
+        ],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Médio',
+        question: `A aplicação indevida de ${rawTheme} pode ser revertida com o atalho Ctrl + Z.`,
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Médio',
+        question: `Em softwares como ${rawTheme}, onde ficam organizadas as ferramentas?`,
+        answers: [
+          'Em guias, faixas de opções ou menus superiores',
+          'Exclusivamente na lixeira do sistema',
+          'Apenas na área de notificação do relógio',
+          'Nos cabos de conexão traseiros'
+        ],
+        correctIndex: 0
+      },
+      // DIFÍCIL
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: `No uso profissional de ${rawTheme}, atalhos de teclado aceleram a produtividade.`,
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 0
+      },
+      {
+        type: 'quiz',
+        difficulty: 'Difícil',
+        question: `Qual atalho padrão desfaz uma alteração realizada com ${rawTheme}?`,
+        answers: ['Ctrl + Z', 'Alt + F4', 'Ctrl + Alt + Del', 'Shift + Esc'],
+        correctIndex: 0
+      },
+      {
+        type: 'true_false',
+        difficulty: 'Difícil',
+        question: `O recurso ${rawTheme} impede que o documento seja impresso ou exportado.`,
+        answers: ['Verdadeiro', 'Falso'],
+        correctIndex: 1
+      }
+    ];
+  }
+
+  // Default Bank (Geral / Qualquer Outro Tema Não Técnico)
   return [
     // FÁCIL
     {

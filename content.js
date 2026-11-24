@@ -3,6 +3,62 @@ console.log('[Kahoot! AI Creator] Content script ativado em create.kahoot.it');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Safe Storage Helpers to prevent Extension Context Invalidated errors
+ */
+function safeStorageSet(items) {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
+      chrome.storage.local.set(items, () => {
+        if (chrome.runtime?.lastError) {
+          // ignore error quietly
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('[Kahoot AI] chrome.storage.local.set aviso:', e);
+  }
+  try {
+    Object.entries(items).forEach(([k, v]) => {
+      localStorage.setItem('kahoot_ai_' + k, String(v ?? ''));
+    });
+  } catch (e) {}
+}
+
+function safeStorageGet(keys, callback) {
+  let finished = false;
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
+      chrome.storage.local.get(keys, (data) => {
+        if (!finished) {
+          finished = true;
+          if (chrome.runtime?.lastError || !data) {
+            fallbackGet();
+          } else {
+            callback(data);
+          }
+        }
+      });
+      return;
+    }
+  } catch (e) {}
+
+  fallbackGet();
+
+  function fallbackGet() {
+    if (finished) return;
+    finished = true;
+    const res = {};
+    keys.forEach(k => {
+      try {
+        const val = localStorage.getItem('kahoot_ai_' + k);
+        if (val !== null && val !== undefined) res[k] = val;
+      } catch (e) {}
+    });
+    callback(res);
+  }
+}
+
 // Initialize on-page assistant when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initOnPageWidget);
@@ -65,7 +121,8 @@ function initOnPageWidget() {
         <label for="kahoot-ai-theme">
           <span style="color:#eab308;">💡</span> Tema ou Assunto do Jogo:
         </label>
-        <input type="text" id="kahoot-ai-theme" placeholder="Ex: Banco de Dados MySQL, Inteligência Artificial, História..." autofocus />
+        <input type="text" id="kahoot-ai-theme" placeholder="Ex: Excel - Função IF, MySQL - Joins, História..." autofocus />
+        <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">Dica: Use <strong>Tema - Subtópico</strong> (ex: <code>Excel - Função IF</code>) para perguntas 100% focadas!</small>
       </div>
 
       <!-- Balanced Rules Card -->
@@ -159,14 +216,14 @@ function initOnPageWidget() {
   `;
   document.body.appendChild(modal);
 
-  // Load existing settings
-  chrome.storage.local.get(['geminiApiKey', 'lastTheme', 'countInput', 'timeSelect'], (data) => {
-    if (data.geminiApiKey) document.getElementById('kahoot-ai-apikey').value = data.geminiApiKey;
-    if (data.lastTheme) {
+  // Load existing settings safely
+  safeStorageGet(['geminiApiKey', 'lastTheme', 'countInput', 'timeSelect'], (data) => {
+    if (data && data.geminiApiKey) document.getElementById('kahoot-ai-apikey').value = data.geminiApiKey;
+    if (data && data.lastTheme) {
       document.getElementById('kahoot-ai-theme').value = data.lastTheme;
     }
-    if (data.countInput) document.getElementById('kahoot-ai-count').value = data.countInput;
-    if (data.timeSelect) document.getElementById('kahoot-ai-time').value = data.timeSelect;
+    if (data && data.countInput) document.getElementById('kahoot-ai-count').value = data.countInput;
+    if (data && data.timeSelect) document.getElementById('kahoot-ai-time').value = data.timeSelect;
   });
 
   // Event handlers
@@ -217,8 +274,8 @@ function initOnPageWidget() {
     const timeLimit = parseInt(document.getElementById('kahoot-ai-time').value, 10) || 20;
     const apiKey = document.getElementById('kahoot-ai-apikey').value.trim();
 
-    // Save to storage
-    chrome.storage.local.set({ geminiApiKey: apiKey, lastTheme: theme, countInput: count, timeSelect: timeLimit });
+    // Save to storage safely
+    safeStorageSet({ geminiApiKey: apiKey, lastTheme: theme, countInput: count, timeSelect: timeLimit });
 
     modal.classList.remove('active');
 
@@ -254,6 +311,8 @@ function initOnPageWidget() {
     const count = parseInt(countInputEl.value, 10) || 6;
     const timeLimit = parseInt(document.getElementById('kahoot-ai-time').value, 10) || 20;
     const apiKey = document.getElementById('kahoot-ai-apikey').value.trim();
+
+    safeStorageSet({ geminiApiKey: apiKey, lastTheme: theme, countInput: count, timeSelect: timeLimit });
 
     showLiveBanner('🧠 Gerando pré-visualização das perguntas...');
 
